@@ -12,14 +12,14 @@ def _get_latest_kpi(session: Session, company_id: int, period: str) -> KPI | Non
     target = next((r for r in rows if r.period == period), None)
     return target
 
-def _infer_base_values(kpi: KPI, asm: ValuationAssumption) -> Tuple[float,float,float,float,float]:
+def _infer_base_values(kpi: KPI, asm: ValuationAssumption) -> Tuple[float,float,float,float,float,float]:
     # revenue, ocf, capex, shares, cash, debt
     revenue = asm.base_revenue if asm.base_revenue is not None else (kpi.revenue or 0)
     ocf = asm.ocf_override if asm.ocf_override is not None else (kpi.operating_cf or 0)
     capex = asm.capex_override if asm.capex_override is not None else (kpi.capex or 0)
-    shares = asm.shares_outstanding if asm.shares_outstanding is not None else (kpi.shares_outstanding or 0)
-    cash = asm.cash_and_equiv if asm.cash_and_equiv is not None else (kpi.cash_and_equiv or 0)
-    debt = asm.total_debt if asm.total_debt is not None else (kpi.total_debt or 0)
+    shares = asm.shares_outstanding if asm.shares_outstanding is not None else (getattr(kpi, 'shares_outstanding', None) or 0)
+    cash = asm.cash_and_equiv if asm.cash_and_equiv is not None else (kpi.cash or 0)
+    debt = asm.total_debt if asm.total_debt is not None else (kpi.debt or 0)
     return revenue, ocf, capex, shares, cash, debt
 
 def _wacc(asm: ValuationAssumption) -> float:
@@ -90,9 +90,10 @@ def _piotroski_f_score(history: List[KPI]) -> int:
     roa_cur = (cur.net_income or 0) / max(cur.total_assets or 1, 1)
     roa_prev = (prev.net_income or 0) / max(prev.total_assets or 1, 1)
     if gt(roa_cur, roa_prev): score += 1
-    if (cur.operating_cf or 0) > 0: score += 1
+    operating_cf = cur.operating_cf or 0
+    if operating_cf > 0: score += 1
     if roa_cur > 0: score += 1
-    if (cur.operating_cf or 0) > (cur.net_income or 0): score += 1
+    if operating_cf > (cur.net_income or 0): score += 1
 
     # 레버리지/유동성/발행: 부채비율 감소, 유동성 개선(여기선 단순: 부채/자산 감소), 신주발행X(데이터 없으면 skip)
     cur_leverage = (cur.total_liabilities or 0) / max(cur.total_assets or 1, 1)

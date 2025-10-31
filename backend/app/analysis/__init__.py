@@ -2,6 +2,8 @@ from .metrics import (
     ttm, growth_rate, margin, roic, invested_capital, ccc as cash_conversion_cycle, days_ratio
 )
 from .enhanced import analyze_ticker, generate_enhanced_insights
+# rules
+from .rules import rule_based_insights
 # compute_ratios가 pipeline.py에 있다면 아래 import 유지
 try:
     from .pipeline import compute_ratios, peer_snapshot
@@ -15,6 +17,8 @@ __all__ = [
     "cash_conversion_cycle", "days_ratio",
     # enhanced
     "analyze_ticker", "generate_enhanced_insights",
+    # rules
+    "rule_based_insights",
     # pipeline
     "compute_ratios", "peer_snapshot",
 ]
